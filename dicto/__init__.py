@@ -3,14 +3,14 @@
 class dicto(dict):
 
     def __init__(self, *args, **kwargs):
-        super(DictO, self).__init__(*args, **kwargs)
+        super(dicto, self).__init__(*args, **kwargs)
 
         for key, value in self.items():
             if isinstance(value, dict):
-                self[key] = DictO(value)
+                self[key] = dicto(value)
 
             elif hasattr(value, "__iter__"):
-                self[key] = [ DictO(e) if isinstance(e, dict) else e for e in value ]
+                self[key] = [ dicto(e) if isinstance(e, dict) else e for e in value ]
 
 
     def __getattr__(self, attr):
@@ -33,6 +33,6 @@ class dicto(dict):
 
         for k, v in merge_dct.iteritems():
             if (k in self and isinstance(self[k], dict) and isinstance(merge_dct[k], collections.Mapping)):
-                self[k].merge(DictO(merge_dct[k]))
+                self[k].merge(dicto(merge_dct[k]))
             else:
                 self[k] = merge_dct[k]
