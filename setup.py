@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "dicto",
-    version = "0.0.5",
+    version = "0.0.6",
     author = "Cristian Garcia",
     author_email = "cgarcia.e88@gmail.com",
     description = ("An object-like dictionary"),
