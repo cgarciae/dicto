@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "dicto",
-    version = "0.0.4",
+    version = "0.0.5",
     author = "Cristian Garcia",
     author_email = "cgarcia.e88@gmail.com",
     description = ("An object-like dictionary"),
@@ -17,5 +17,5 @@ setup(
         'tfinterface': ['README-template.md']
     },
     include_package_data = True,
-    install_requires = []
+    install_requires = ["PyYAML"]
 )

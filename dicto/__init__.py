@@ -1,4 +1,6 @@
-
+import os
+import yaml
+import json
 
 class dicto(dict):
 
@@ -14,14 +16,17 @@ class dicto(dict):
 
 
     def __getattr__(self, attr):
-        return self[attr]
+        if attr in self:
+            return self[attr]
+        else:
+            raise AttributeError(attr)
 
     def __setattr__(self, attr, value):
         self[attr] = value
 
 
 
-    def merge(self, merge_dct):
+    def merge_(self, merge_dct):
         """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
         updating only top-level keys, dict_merge recurses down into dicts nested
         to an arbitrary depth, updating keys. The ``merge_dct`` is merged into
@@ -36,3 +41,21 @@ class dicto(dict):
                 self[k].merge(dicto(merge_dct[k]))
             else:
                 self[k] = merge_dct[k]
+
+    def merge(self, *args, **kwargs):
+        return self.merge_(*args, **kwargs)
+
+    @classmethod
+    def load_(cls, filepath):
+        filepath = os.path.realpath(filepath)
+
+        if filepath.endswith(".yaml") or filepath.endswith(".yml"):
+            with open(filepath, 'r') as stream:
+                dict_ = yaml.load(stream)
+        elif filepath.endswith(".json"):
+            with open(filepath, 'r') as stream:
+                dict_ = json.load(stream)
+        else:
+            raise Exception("File type not supported.")
+
+        return cls(dict_)
