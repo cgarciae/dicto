@@ -1,6 +1,7 @@
 import os
 import yaml
 import json
+import collections
 
 class dicto(dict):
 
@@ -10,6 +11,9 @@ class dicto(dict):
         for key, value in self.items():
             if isinstance(value, dict):
                 self[key] = dicto(value)
+
+            elif isinstance(value, str):
+                pass
 
             elif hasattr(value, "__iter__"):
                 self[key] = [ dicto(e) if isinstance(e, dict) else e for e in value ]
@@ -36,11 +40,13 @@ class dicto(dict):
         :return: None
         """
 
-        for k, v in merge_dct.iteritems():
+        for k, v in merge_dct.items():
             if (k in self and isinstance(self[k], dict) and isinstance(merge_dct[k], collections.Mapping)):
-                self[k].merge(dicto(merge_dct[k]))
+                self[k].merge_(dicto(merge_dct[k]))
             else:
                 self[k] = merge_dct[k]
+        
+        return self
 
     def merge(self, *args, **kwargs):
         return self.merge_(*args, **kwargs)
