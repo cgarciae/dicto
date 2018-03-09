@@ -28,6 +28,25 @@ class dicto(dict):
     def __setattr__(self, attr, value):
         self[attr] = value
 
+    
+    def dict_(self):
+        d = dict(self)
+
+        for key, value in d.items():
+            if isinstance(value, dicto):
+                d[key] = value.dict_()
+
+            elif isinstance(value, str):
+                pass
+
+            elif isinstance(value, dict):
+                pass
+
+            elif hasattr(value, "__iter__"):
+                d[key] = [ e.dict_() if isinstance(e, dicto) else e for e in value ]
+
+        return d
+
 
 
     def merge_(self, merge_dct):
@@ -65,3 +84,17 @@ class dicto(dict):
             raise Exception("File type not supported.")
 
         return cls(dict_)
+
+    def dump_(self, filepath):
+        
+        filepath = os.path.realpath(filepath)
+        obj = self.dict_()
+
+        if filepath.endswith(".yaml") or filepath.endswith(".yml"):
+            with open(filepath, 'w') as stream:
+                yaml.safe_dump(obj, stream, default_flow_style=False)
+        elif filepath.endswith(".json"):
+            with open(filepath, 'w') as stream:
+                json.dump(obj, stream)
+        else:
+            raise Exception("File type not supported.")
