@@ -82,8 +82,8 @@ class dicto(dict):
             with open(filepath, 'r') as stream:
                 dict_ = json.load(stream)
         elif filepath.endswith(".xml"):
-            with open(file_path) as fd:
-                dict_ = xmltodict.parse(fd.read())
+            with open(filepath, 'r') as stream:
+                dict_ = xmltodict.parse(stream.read())
         else:
             raise Exception("File type not supported.")
 
