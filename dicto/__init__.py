@@ -2,6 +2,7 @@ import os
 import yaml
 import json
 import collections
+import xmltodict
 
 class dicto(dict):
 
@@ -80,6 +81,9 @@ class dicto(dict):
         elif filepath.endswith(".json"):
             with open(filepath, 'r') as stream:
                 dict_ = json.load(stream)
+        elif filepath.endswith(".xml"):
+            with open(file_path) as fd:
+                dict_ = xmltodict.parse(fd.read())
         else:
             raise Exception("File type not supported.")
 
