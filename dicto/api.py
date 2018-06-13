@@ -3,72 +3,75 @@ import yaml
 import json
 import collections
 import xmltodict
+import copy
 
 class Dicto(object):
 
     def __init__(self, dict_, **kwargs):
+        
+        dict_.update(kwargs)
 
         if not isinstance(dict_, dict):
             raise ValueError("dict_ parameters is not a python dict")
         
-        super(Dicto, self).__setattr__("_dict", dict_)
-    
-        self._dict.update(kwargs)
-
-        for key, value in self._dict.items():
+        for key, value in dict_.items():
             if isinstance(value, Dicto):
                 pass
 
             elif isinstance(value, dict):
-                self[key] = Dicto(value)
+                value = Dicto(value)
 
             elif isinstance(value, str):
                 pass
 
             elif hasattr(value, "__iter__"):
-                self[key] = [ Dicto(e) if isinstance(e, dict) else e for e in value ]
+                value = [ Dicto(e) if isinstance(e, dict) else e for e in value ]
+
+            setattr(self, key, value)
 
 
-    def __getattr__(self, attr):
-        if attr in self._dict:
-            return self._dict[attr]
-        else:
-            raise AttributeError(attr)
+    # def __getattr__(self, attr):
+        
+    #     if attr in self._dict:
+    #         return self._dict[attr]
+    #     else:
+    #         raise AttributeError(attr)
 
-    def __setattr__(self, attr, value):
-        self._dict[attr] = value
+    # def __setattr__(self, attr, value):
+    #     self._dict[attr] = value
 
     def __setitem__(self, key, item):
-        self._dict[key] = item
+        # self._dict[key] = item
+        setattr(self, key, item)
 
     def __getitem__(self, key):
-        return self._dict[key]
+        return getattr(self, key)
 
     def __repr__(self):
-        return repr(self._dict)
+        return repr(self.__dict__)
 
     def __len__(self):
-        return len(self._dict)
+        return len(self.__dict__)
 
-    def __delitem__(self, key):
-        del self._dict[key]
+    # def __delitem__(self, key):
+    #     del self._dict[key]
 
     def __cmp__(self, dict_):
-        return self._dict.__cmp__(dict_)
+        return self.__dict__.__cmp__(dict_)
 
     def __contains__(self, item):
-        return item in self._dict
+        return item in self.__dict__
 
     def __iter__(self):
-        return iter(self._dict)
+        return iter(self.__dict__)
 
     
 def to_dict(dicto):
-    dict_ = dicto._dict.copy()
+    dict_ = dicto.__dict__.copy()
 
     for key, value in dict_.items():
         if isinstance(value, Dicto):
-            dict_[key] = value._dict
+            dict_[key] = value.__dict__
 
         elif isinstance(value, str):
             pass
@@ -77,7 +80,7 @@ def to_dict(dicto):
             pass
 
         elif hasattr(value, "__iter__"):
-            dict_[key] = [ e._dict if isinstance(e, Dicto) else e for e in value ]
+            dict_[key] = [ e.__dict__ if isinstance(e, Dicto) else e for e in value ]
 
     return dict_
 
@@ -98,7 +101,7 @@ def merge(dicto, other):
     if not isinstance(other, Dicto):
         other = Dicto(other)
 
-    for k, v in other._dict.items():
+    for k, v in other.__dict__.items():
         if k in dicto and isinstance(dicto[k], Dicto) and isinstance(other[k], Dicto):
             dicto[k] = merge(dicto[k], other[k])
         else:
@@ -127,7 +130,7 @@ def load(filepath):
 def dump(dicto, filepath):
     
     filepath = os.path.realpath(filepath)
-    obj = dicto._dict
+    obj = dicto.__dict__
 
     if filepath.endswith(".yaml") or filepath.endswith(".yml"):
         with open(filepath, 'w') as stream:
