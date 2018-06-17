@@ -110,7 +110,7 @@ def merge(dicto, other):
     return dicto
 
 
-def load(filepath):
+def load(filepath, as_dicto = True):
     filepath = os.path.realpath(filepath)
 
     if filepath.endswith(".yaml") or filepath.endswith(".yml"):
@@ -125,7 +125,10 @@ def load(filepath):
     else:
         raise Exception("File type not supported.")
 
-    return Dicto(dict_)
+    if as_dicto:
+        dict_ = Dicto(dict_)
+
+    return dict_
 
 def dump(dicto, filepath):
     
@@ -142,14 +145,13 @@ def dump(dicto, filepath):
         raise Exception("File type not supported.")
 
 
-def click_options_config(config_path):
+def click_options_config(config_path, single_argument = None):
     import click
 
-    dicto = load(config_path)
-    dicto = to_dict(dicto)
+    dict_ = load(config_path, as_dicto=False)
 
     def decorator(f):
-        for flag, kwargs in dicto.items():
+        for flag, kwargs in dict_.items():
             op_flag = "--" + flag
 
             if not isinstance(kwargs, dict):
@@ -160,6 +162,27 @@ def click_options_config(config_path):
 
             f = click.option(op_flag, **kwargs)(f)
 
-        return f
+        
+        if single_argument is not None:
+            params = Dicto({})
+
+            def final_f(*args, **final_kwargs):
+                
+                for kwarg in dict_:
+                    kwarg = kwarg.replace("-", "_")
+
+                    if kwarg in final_kwargs:
+                        params[kwarg] = final_kwargs.pop(kwarg)
+
+                final_kwargs[single_argument] = params
+
+                return f(*args, **final_kwargs)
+
+            final_f.__click_params__ = f.__click_params__
+        else:
+            final_f = f
+
+
+        return final_f
 
     return decorator
