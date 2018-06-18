@@ -170,7 +170,7 @@ def dump(dicto, filepath):
         raise Exception("File type not supported.")
 
 
-def click_options_config(config_path, single_argument = None):
+def click_options_config(config_path, single_argument = None, as_dicto = True):
     import click
 
     dict_ = load(config_path, as_dicto=False)
@@ -192,7 +192,7 @@ def click_options_config(config_path, single_argument = None):
 
         
         if single_argument is not None:
-            params = Dicto({})
+            params = Dicto() if as_dicto else dict()
 
             def final_f(*args, **final_kwargs):
                 
