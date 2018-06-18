@@ -170,7 +170,7 @@ def dump(dicto, filepath):
         raise Exception("File type not supported.")
 
 
-def click_options_config(config_path, single_argument = None, as_dicto = True):
+def click_options_config(config_path, single_argument = None, as_dicto = True, underscore_to_dash = True):
     import click
 
     dict_ = load(config_path, as_dicto=False)
@@ -180,7 +180,9 @@ def click_options_config(config_path, single_argument = None, as_dicto = True):
 
     def decorator(f):
         for flag, kwargs in dict_.items():
-            op_flag = "--" + flag
+
+            op_flag = flag.replace('_', '-') if underscore_to_dash else flag
+            op_flag = "--" + op_flag
 
             if not isinstance(kwargs, dict):
                 kwargs = dict(default = kwargs)

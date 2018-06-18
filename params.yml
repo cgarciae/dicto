@@ -1,4 +1,4 @@
 p1: "1"
-p2: 
+p_2: 
   default: True
   help: Parameter 2
