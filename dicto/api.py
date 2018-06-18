@@ -5,40 +5,22 @@ import collections
 import xmltodict
 import copy
 
+
+            
+
+            
+
 class Dicto(object):
 
-    def __init__(self, dict_, **kwargs):
-        
-        dict_.update(kwargs)
+    def __init__(self, dict_ = {}, **kwargs):
 
         if not isinstance(dict_, dict):
             raise ValueError("dict_ parameters is not a python dict")
         
-        for key, value in dict_.items():
-            if isinstance(value, Dicto):
-                pass
+        dict_.update(kwargs)
 
-            elif isinstance(value, dict):
-                value = Dicto(value)
+        to_dicto(dict_, dicto = self)
 
-            elif isinstance(value, str):
-                pass
-
-            elif hasattr(value, "__iter__"):
-                value = [ Dicto(e) if isinstance(e, dict) else e for e in value ]
-
-            setattr(self, key, value)
-
-
-    # def __getattr__(self, attr):
-        
-    #     if attr in self._dict:
-    #         return self._dict[attr]
-    #     else:
-    #         raise AttributeError(attr)
-
-    # def __setattr__(self, attr, value):
-    #     self._dict[attr] = value
 
     def __setitem__(self, key, item):
         # self._dict[key] = item
@@ -53,36 +35,79 @@ class Dicto(object):
     def __len__(self):
         return len(self.__dict__)
 
-    # def __delitem__(self, key):
-    #     del self._dict[key]
-
-    def __cmp__(self, dict_):
-        return self.__dict__.__cmp__(dict_)
+    def __delitem__(self, key):
+        delattr(self, key)
 
     def __contains__(self, item):
-        return item in self.__dict__
+        return hasattr(self, item)
 
     def __iter__(self):
         return iter(self.__dict__)
 
+
+def to_dicto(obj, dicto = None):
     
-def to_dict(dicto):
-    dict_ = dicto.__dict__.copy()
+    if isinstance(obj, Dicto):
+        return obj
+    
+    elif isinstance(obj, dict):
 
-    for key, value in dict_.items():
-        if isinstance(value, Dicto):
-            dict_[key] = value.__dict__
+        if dicto is None:
+            dicto = Dicto()
 
-        elif isinstance(value, str):
-            pass
+        for key, value in obj.items():
+            
+            value = to_dicto(value)
 
-        elif isinstance(value, dict):
-            pass
+            setattr(dicto, key, value)
 
-        elif hasattr(value, "__iter__"):
-            dict_[key] = [ e.__dict__ if isinstance(e, Dicto) else e for e in value ]
+        return dicto
 
-    return dict_
+    elif isinstance(obj, str):
+        return obj
+
+    elif isinstance(obj, list):
+        return [ to_dicto(x) for x in obj ]
+
+    elif isinstance(obj, tuple):
+        return tuple([ to_dicto(x) for x in obj ])
+
+    elif hasattr(obj, "__iter__"):
+        return ( to_dicto(x) for x in obj )
+
+    else:
+        return obj
+    
+def to_dict(obj, dict_ = None):
+
+    if isinstance(obj, dict):
+        return obj
+    
+    elif isinstance(obj, Dicto):
+
+        if dict_ is None:
+            dict_ = dict()
+
+        for key, value in obj.__dict__.items():
+
+            dict_[key] = to_dict(value)
+
+        return dict_
+
+    elif isinstance(obj, str):
+        return obj
+
+    elif isinstance(obj, list):
+        return [ to_dict(x) for x in obj ]
+
+    elif isinstance(obj, tuple):
+        return tuple([ to_dict(x) for x in obj ])
+
+    elif hasattr(obj, "__iter__"):
+        return ( to_dict(x) for x in obj )
+
+    else:
+        return obj
 
 
 
@@ -126,14 +151,14 @@ def load(filepath, as_dicto = True):
         raise Exception("File type not supported.")
 
     if as_dicto:
-        dict_ = Dicto(dict_)
-
-    return dict_
+        return to_dicto(dict_)
+    else:
+        return dict_
 
 def dump(dicto, filepath):
     
     filepath = os.path.realpath(filepath)
-    obj = dicto.__dict__
+    obj = to_dict(dicto)
 
     if filepath.endswith(".yaml") or filepath.endswith(".yml"):
         with open(filepath, 'w') as stream:
@@ -149,6 +174,9 @@ def click_options_config(config_path, single_argument = None):
     import click
 
     dict_ = load(config_path, as_dicto=False)
+
+    if not isinstance(dict_, dict):
+        raise TypeError("File {config_path} was loaded as a {type}, expected a dict.".format(config_path=config_path, type=type(dict_)))
 
     def decorator(f):
         for flag, kwargs in dict_.items():
