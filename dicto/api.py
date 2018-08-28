@@ -4,10 +4,7 @@ import json
 import collections
 import xmltodict
 import copy
-
-
-            
-
+import functools
             
 
 class Dicto(object):
@@ -169,8 +166,42 @@ def dump(dicto, filepath):
     else:
         raise Exception("File type not supported.")
 
+def fire_options(config_path, single_argument = None, as_dicto = True):
 
-def click_options_config(config_path, single_argument = None, as_dicto = True, underscore_to_dash = True):
+    dict_ = load(config_path, as_dicto=False)
+
+    if not isinstance(dict_, dict):
+        raise TypeError("File {config_path} was loaded as a {type}, expected a dict.".format(config_path=config_path, type=type(dict_)))
+
+
+    def decorator(f):
+
+        @functools.wraps(f)
+        def final_f(*args, **kwargs):
+
+            if single_argument is not None:
+
+                params = Dicto(dict_) if as_dicto else dict(dict_)
+            
+                for flag in dict_:
+                    if flag in kwargs:
+                        params[flag] = kwargs.pop(flag)
+
+                kwargs[single_argument] = params
+
+            else:
+                kwargs.update(dict_)
+
+            return f(*args, **kwargs)
+
+
+        return final_f
+
+    return decorator
+
+
+
+def click_options(config_path, single_argument = None, as_dicto = True, underscore_to_dash = True):
     import click
 
     dict_ = load(config_path, as_dicto=False)
@@ -179,6 +210,7 @@ def click_options_config(config_path, single_argument = None, as_dicto = True, u
         raise TypeError("File {config_path} was loaded as a {type}, expected a dict.".format(config_path=config_path, type=type(dict_)))
 
     def decorator(f):
+
         for flag, kwargs in dict_.items():
 
             op_flag = flag.replace('_', '-') if underscore_to_dash else flag
@@ -213,6 +245,11 @@ def click_options_config(config_path, single_argument = None, as_dicto = True, u
             final_f = f
 
 
+        final_f = functools.update_wrapper(final_f, f)
+
         return final_f
 
     return decorator
+
+# legacy
+click_options_config = click_options
