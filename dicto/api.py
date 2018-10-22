@@ -1,11 +1,11 @@
 import os
-import yaml
 import json
 import collections
-import xmltodict
 import copy
 import functools
-            
+
+yaml = None
+xmltodict = None
 
 class Dicto(object):
 
@@ -136,14 +136,30 @@ def load(filepath, as_dicto = True):
     filepath = os.path.realpath(filepath)
 
     if filepath.endswith(".yaml") or filepath.endswith(".yml"):
+        global yaml
+
+        if not yaml:
+            import yaml as mod
+            yaml = mod
+
         with open(filepath, 'r') as stream:
             dict_ = yaml.load(stream)
+
     elif filepath.endswith(".json"):
+        
         with open(filepath, 'r') as stream:
             dict_ = json.load(stream)
+    
     elif filepath.endswith(".xml"):
+        global xmltodict
+
+        if not xmltodict:
+            import xmltodict as mod
+            xmltodict = mod
+
         with open(filepath, 'r') as stream:
             dict_ = xmltodict.parse(stream.read())
+        
     else:
         raise Exception("File type not supported.")
 
@@ -168,7 +184,10 @@ def dump(dicto, filepath):
 
 def fire_options(config_path, single_argument = None, as_dicto = True):
 
-    dict_ = load(config_path, as_dicto=False)
+    if isinstance(config_path, dict):
+        dict_ = config_path
+    else:
+        dict_ = load(config_path, as_dicto=False)
 
     if not isinstance(dict_, dict):
         raise TypeError("File {config_path} was loaded as a {type}, expected a dict.".format(config_path=config_path, type=type(dict_)))
@@ -178,6 +197,7 @@ def fire_options(config_path, single_argument = None, as_dicto = True):
 
         @functools.wraps(f)
         def final_f(*args, **kwargs):
+            
 
             if single_argument is not None:
 
@@ -190,7 +210,9 @@ def fire_options(config_path, single_argument = None, as_dicto = True):
                 kwargs[single_argument] = params
 
             else:
-                kwargs.update(dict_)
+                dict_.update(kwargs)
+                kwargs = dict_
+
 
             return f(*args, **kwargs)
 
@@ -201,10 +223,29 @@ def fire_options(config_path, single_argument = None, as_dicto = True):
 
 
 
+def kwargs_dicto(arg_name):
+
+    def decorator(f):
+
+        @functools.wraps(f)
+        def final_f(*args, **kwargs):
+
+            kwargs = {arg_name: Dicto(kwargs)}
+
+            return f(*args, **kwargs)
+
+
+        return final_f
+
+    return decorator
+
 def click_options(config_path, single_argument = None, as_dicto = True, underscore_to_dash = True):
     import click
 
-    dict_ = load(config_path, as_dicto=False)
+    if isinstance(config_path, dict):
+        dict_ = config_path
+    else:
+        dict_ = load(config_path, as_dicto=False)
 
     if not isinstance(dict_, dict):
         raise TypeError("File {config_path} was loaded as a {type}, expected a dict.".format(config_path=config_path, type=type(dict_)))
