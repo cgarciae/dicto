@@ -1,7 +1,7 @@
 import fire
 from dicto import fire_options
 
-@fire_options("params-fire.yml")
+@fire_options("params-fire.yml", use_environment = True)
 def main(hola, chao, p1, p_2):
     # params = Dicto(params)
 

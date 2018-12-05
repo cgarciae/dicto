@@ -9,7 +9,10 @@ xmltodict = None
 
 class Dicto(object):
 
-    def __init__(self, dict_ = {}, **kwargs):
+    def __init__(self, dict_=None, **kwargs):
+
+        if dict_ is None:
+            dict_ = {}
 
         if not isinstance(dict_, dict):
             raise ValueError("dict_ parameters is not a python dict")
@@ -182,7 +185,9 @@ def dump(dicto, filepath):
     else:
         raise Exception("File type not supported.")
 
-def fire_options(config_path, single_argument = None, as_dicto = True):
+
+def fire_options(config_path, single_argument = None, as_dicto = True, use_environment = False):
+    import fire
 
     if isinstance(config_path, dict):
         dict_ = config_path
@@ -192,6 +197,16 @@ def fire_options(config_path, single_argument = None, as_dicto = True):
     if not isinstance(dict_, dict):
         raise TypeError("File {config_path} was loaded as a {type}, expected a dict.".format(config_path=config_path, type=type(dict_)))
 
+    if use_environment:
+        for key in dict_:
+            if key in os.environ:
+                value = os.environ[key]
+                dict_[key] = fire.parser.DefaultParseValue(value)
+            elif key.upper() in os.environ:
+                value = os.environ[key.upper()]
+                dict_[key] = fire.parser.DefaultParseValue(value)
+
+            
 
     def decorator(f):
 
@@ -220,8 +235,6 @@ def fire_options(config_path, single_argument = None, as_dicto = True):
         return final_f
 
     return decorator
-
-
 
 def kwargs_dicto(arg_name):
 
