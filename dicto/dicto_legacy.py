@@ -1,8 +1,9 @@
 import os
-import yaml
 import json
 import collections
-import xmltodict
+
+yaml = None
+xmltodict = None
 
 class dicto(dict):
 
@@ -76,12 +77,24 @@ class dicto(dict):
         filepath = os.path.realpath(filepath)
 
         if filepath.endswith(".yaml") or filepath.endswith(".yml"):
+            global yaml
+
+            if yaml is None:
+                import yaml as mod
+                yaml = mod
+
             with open(filepath, 'r') as stream:
                 dict_ = yaml.load(stream)
         elif filepath.endswith(".json"):
             with open(filepath, 'r') as stream:
                 dict_ = json.load(stream)
         elif filepath.endswith(".xml"):
+            global xmltodict
+
+            if xmltodict is None:
+                import xmltodict as mod
+                xmltodict = mod
+            
             with open(filepath, 'r') as stream:
                 dict_ = xmltodict.parse(stream.read())
         else:
@@ -95,6 +108,12 @@ class dicto(dict):
         obj = self.dict_()
 
         if filepath.endswith(".yaml") or filepath.endswith(".yml"):
+            global yaml
+
+            if yaml is None:
+                import yaml as mod
+                yaml = mod
+
             with open(filepath, 'w') as stream:
                 yaml.safe_dump(obj, stream, default_flow_style=False)
         elif filepath.endswith(".json"):
