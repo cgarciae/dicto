@@ -136,19 +136,20 @@ def merge(dicto, other):
 
 
 def load(filepath: Path, as_dicto: bool = True):
-    filepath = os.path.realpath(filepath)
+    if not isinstance(filepath, Path):
+        filepath = Path(filepath)
 
-    if filepath.endswith(".yaml") or filepath.endswith(".yml"):
+    if filepath.suffix in (".yaml", ".yml"):
 
         with open(filepath, "r") as stream:
             dict_ = yaml.load(stream)
 
-    elif filepath.endswith(".json"):
+    elif filepath.suffix == ".json":
 
         with open(filepath, "r") as stream:
             dict_ = json.load(stream)
 
-    elif filepath.endswith(".xml"):
+    elif filepath.suffix == ".xml":
 
         with open(filepath, "r") as stream:
             dict_ = xmltodict.parse(stream.read())
@@ -167,13 +168,13 @@ def dump(dicto: Dicto, filepath: Path):
     if not isinstance(filepath, Path):
         filepath = Path(filepath)
 
-    filepath = str(filepath.absolute())
     obj = to_dict(dicto)
 
-    if filepath.endswith(".yaml") or filepath.endswith(".yml"):
+    if filepath.suffix in (".yaml", ".yml"):
         with open(filepath, "w") as stream:
             yaml.safe_dump(obj, stream, default_flow_style=False)
-    elif filepath.endswith(".json"):
+
+    elif filepath.suffix == ".json":
         with open(filepath, "w") as stream:
             json.dump(obj, stream)
     else:
