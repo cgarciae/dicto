@@ -1,14 +1,15 @@
-import os
-import json
 import collections
 import copy
 import functools
+import json
+import os
 
-yaml = None
-xmltodict = None
+import xmltodict
+import yaml
+from pathlib import Path
+
 
 class Dicto(object):
-
     def __init__(self, dict_=None, **kwargs):
 
         if dict_ is None:
@@ -16,11 +17,10 @@ class Dicto(object):
 
         if not isinstance(dict_, dict):
             raise ValueError("dict_ parameters is not a python dict")
-        
+
         dict_.update(kwargs)
 
-        to_dicto(dict_, dicto = self)
-
+        to_dicto(dict_, dicto=self)
 
     def __setitem__(self, key, item):
         # self._dict[key] = item
@@ -30,10 +30,10 @@ class Dicto(object):
         return getattr(self, key)
 
     def __repr__(self):
-        return repr(self.__dict__)
+        return repr(vars(self))
 
     def __len__(self):
-        return len(self.__dict__)
+        return len(vars(self))
 
     def __delitem__(self, key):
         delattr(self, key)
@@ -42,21 +42,21 @@ class Dicto(object):
         return hasattr(self, item)
 
     def __iter__(self):
-        return iter(self.__dict__)
+        return iter(vars(self))
 
 
-def to_dicto(obj, dicto = None):
-    
+def to_dicto(obj, dicto=None):
+
     if isinstance(obj, Dicto):
         return obj
-    
+
     elif isinstance(obj, dict):
 
         if dicto is None:
             dicto = Dicto()
 
         for key, value in obj.items():
-            
+
             value = to_dicto(value)
 
             setattr(dicto, key, value)
@@ -67,22 +67,23 @@ def to_dicto(obj, dicto = None):
         return obj
 
     elif isinstance(obj, list):
-        return [ to_dicto(x) for x in obj ]
+        return [to_dicto(x) for x in obj]
 
     elif isinstance(obj, tuple):
-        return tuple([ to_dicto(x) for x in obj ])
+        return tuple([to_dicto(x) for x in obj])
 
     elif hasattr(obj, "__iter__"):
-        return ( to_dicto(x) for x in obj )
+        return (to_dicto(x) for x in obj)
 
     else:
         return obj
-    
-def to_dict(obj, dict_ = None):
+
+
+def to_dict(obj, dict_=None):
 
     if isinstance(obj, dict):
         return obj
-    
+
     elif isinstance(obj, Dicto):
 
         if dict_ is None:
@@ -98,17 +99,16 @@ def to_dict(obj, dict_ = None):
         return obj
 
     elif isinstance(obj, list):
-        return [ to_dict(x) for x in obj ]
+        return [to_dict(x) for x in obj]
 
     elif isinstance(obj, tuple):
-        return tuple([ to_dict(x) for x in obj ])
+        return tuple([to_dict(x) for x in obj])
 
     elif hasattr(obj, "__iter__"):
-        return ( to_dict(x) for x in obj )
+        return (to_dict(x) for x in obj)
 
     else:
         return obj
-
 
 
 def merge(dicto, other):
@@ -131,38 +131,28 @@ def merge(dicto, other):
             dicto[k] = merge(dicto[k], other[k])
         else:
             dicto[k] = other[k]
-    
+
     return dicto
 
 
-def load(filepath, as_dicto = True):
+def load(filepath: Path, as_dicto: bool = True):
     filepath = os.path.realpath(filepath)
 
     if filepath.endswith(".yaml") or filepath.endswith(".yml"):
-        global yaml
 
-        if not yaml:
-            import yaml as mod
-            yaml = mod
-
-        with open(filepath, 'r') as stream:
+        with open(filepath, "r") as stream:
             dict_ = yaml.load(stream)
 
     elif filepath.endswith(".json"):
-        
-        with open(filepath, 'r') as stream:
+
+        with open(filepath, "r") as stream:
             dict_ = json.load(stream)
-    
+
     elif filepath.endswith(".xml"):
-        global xmltodict
 
-        if not xmltodict:
-            import xmltodict as mod
-            xmltodict = mod
-
-        with open(filepath, 'r') as stream:
+        with open(filepath, "r") as stream:
             dict_ = xmltodict.parse(stream.read())
-        
+
     else:
         raise Exception("File type not supported.")
 
@@ -171,139 +161,20 @@ def load(filepath, as_dicto = True):
     else:
         return dict_
 
-def dump(dicto, filepath):
-    
-    filepath = os.path.realpath(filepath)
+
+def dump(dicto: Dicto, filepath: Path):
+
+    if not isinstance(filepath, Path):
+        filepath = Path(filepath)
+
+    filepath = str(filepath.absolute())
     obj = to_dict(dicto)
 
     if filepath.endswith(".yaml") or filepath.endswith(".yml"):
-        with open(filepath, 'w') as stream:
+        with open(filepath, "w") as stream:
             yaml.safe_dump(obj, stream, default_flow_style=False)
     elif filepath.endswith(".json"):
-        with open(filepath, 'w') as stream:
+        with open(filepath, "w") as stream:
             json.dump(obj, stream)
     else:
         raise Exception("File type not supported.")
-
-
-def fire_options(config_path, single_argument = None, as_dicto = True, use_environment = False):
-    import fire
-
-    if isinstance(config_path, dict):
-        dict_ = config_path
-    else:
-        dict_ = load(config_path, as_dicto=False)
-
-    if not isinstance(dict_, dict):
-        raise TypeError("File {config_path} was loaded as a {type}, expected a dict.".format(config_path=config_path, type=type(dict_)))
-
-    if use_environment:
-        for key in dict_:
-            if key in os.environ:
-                value = os.environ[key]
-                dict_[key] = fire.parser.DefaultParseValue(value)
-            elif key.upper() in os.environ:
-                value = os.environ[key.upper()]
-                dict_[key] = fire.parser.DefaultParseValue(value)
-
-            
-
-    def decorator(f):
-
-        @functools.wraps(f)
-        def final_f(*args, **kwargs):
-            
-
-            if single_argument is not None:
-
-                params = Dicto(dict_) if as_dicto else dict(dict_)
-            
-                for flag in dict_:
-                    if flag in kwargs:
-                        params[flag] = kwargs.pop(flag)
-
-                kwargs[single_argument] = params
-
-            else:
-                dict_.update(kwargs)
-                kwargs = dict_
-
-
-            return f(*args, **kwargs)
-
-
-        return final_f
-
-    return decorator
-
-def kwargs_dicto(arg_name):
-
-    def decorator(f):
-
-        @functools.wraps(f)
-        def final_f(*args, **kwargs):
-
-            kwargs = {arg_name: Dicto(kwargs)}
-
-            return f(*args, **kwargs)
-
-
-        return final_f
-
-    return decorator
-
-def click_options(config_path, single_argument = None, as_dicto = True, underscore_to_dash = True):
-    import click
-
-    if isinstance(config_path, dict):
-        dict_ = config_path
-    else:
-        dict_ = load(config_path, as_dicto=False)
-
-    if not isinstance(dict_, dict):
-        raise TypeError("File {config_path} was loaded as a {type}, expected a dict.".format(config_path=config_path, type=type(dict_)))
-
-    def decorator(f):
-
-        for flag, kwargs in dict_.items():
-
-            op_flag = flag.replace('_', '-') if underscore_to_dash else flag
-            op_flag = "--" + op_flag
-
-            if not isinstance(kwargs, dict):
-                kwargs = dict(default = kwargs)
-            
-            if "default" in kwargs and not "type" in kwargs:
-                kwargs["type"] = type(kwargs["default"])
-
-            f = click.option(op_flag, **kwargs)(f)
-
-        
-        if single_argument is not None:
-            params = Dicto() if as_dicto else dict()
-
-            def final_f(*args, **final_kwargs):
-                
-                for kwarg in dict_:
-                    kwarg = kwarg.replace("-", "_")
-
-                    if kwarg in final_kwargs:
-                        params[kwarg] = final_kwargs.pop(kwarg)
-
-                final_kwargs[single_argument] = params
-
-                return f(*args, **final_kwargs)
-
-            final_f.__click_params__ = f.__click_params__
-        else:
-            final_f = f
-
-
-        final_f = functools.update_wrapper(final_f, f)
-
-        return final_f
-
-    return decorator
-
-# legacy
-click_options_config = click_options
