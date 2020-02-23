@@ -142,7 +142,7 @@ def load(filepath: Path, as_dicto: bool = True):
     if filepath.suffix in (".yaml", ".yml"):
 
         with open(filepath, "r") as stream:
-            dict_ = yaml.load(stream)
+            dict_ = yaml.safe_load(stream)
 
     elif filepath.suffix == ".json":
 
