@@ -1,6 +1,6 @@
 site_name: Dicto
-repo_name: cgarciae/dicto
-repo_url: https://github.com/cgarciae/dicto
+# repo_name: cgarciae/dicto
+# repo_url: https://github.com/cgarciae/dicto
 
 theme:
   name: material

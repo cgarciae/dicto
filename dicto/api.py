@@ -1,3 +1,7 @@
+"""
+DCDD
+"""
+
 import collections
 import copy
 import functools
@@ -11,14 +15,16 @@ import yaml
 
 
 class Dicto(object):
-    """"""
+    """
+    ABC
+    """
 
     def __init__(self, dict_: dict = None, **kwargs):
         """
-        Creates a `Dicto` instance from a `dict` recursively, that is, inner fields of type, `dict`, `list`, `tuple`, and `set` and traversed and all `dict` objects found at any point are converted to a `Dicto`.
+        Creates a Dicto instance from a `dict` recursively, that is, inner fields of type, `dict`, `list`, `tuple`, and `set` and traversed and all `dict` objects found at any point are converted to a Dicto.
 
         Parameters:
-            dict_: a `dict` object (or any object accepted by `dict`s constructor) to be converted to a `Dicto`.
+            dict_: a `dict` object (or any object accepted by `dict`s constructor) to be converted to a Dicto.
             kwargs: just like in `dict`, all keyword arguments are added as fields.
         """
 
@@ -85,10 +91,10 @@ def to_dicto(obj, dicto=None):
 
 def to_dict(obj: typing.Any, dict_=None):
     """
-    Converts a `Dicto` object to a `dict` recursively, that is, inner fields of type `Dicto`, `dict`, `list`, `tuple`, and `set` and traversed and all `Dicto` objects found at any point are converted to `dict`.
+    Converts a Dicto object to a `dict` recursively, that is, inner fields of type Dicto, `dict`, `list`, `tuple`, and `set` and traversed and all Dicto objects found at any point are converted to `dict`.
 
     Parameters:
-        obj: a `Dicto`, `dict`, `list`, `tuple`, or `set` object to be parsed to a `dict`, objects of other types are returned as is.
+        obj: a Dicto, `dict`, `list`, `tuple`, or `set` object to be parsed to a `dict`, objects of other types are returned as is.
     """
 
     if isinstance(obj, dict):
@@ -137,7 +143,7 @@ def merge(dicto, other):
 
 def load(filepath: Path) -> Dicto:
     """
-    Loads a `Dicto` from a config file. Currently the following extension are valid:
+    Loads a Dicto from a config file. Currently the following extension are valid:
 
     * `.json`
     * `.yaml` or `.yml`
@@ -147,7 +153,7 @@ def load(filepath: Path) -> Dicto:
         filepath: a `pathlib.Path` or `str` containing the path to the config file.
     
     Returns:
-        A `Dicto` instance.
+        A Dicto instance.
     """
     if not isinstance(filepath, Path):
         filepath = Path(filepath)
@@ -175,13 +181,13 @@ def load(filepath: Path) -> Dicto:
 
 def dump(dicto: Dicto, filepath: Path):
     """
-    Serializes a `Dicto` instance to a config file. Currently the following extension are valid:
+    Serializes a Dicto instance to a config file. Currently the following extension are valid:
 
     * `.json`
     * `.yaml` or `.yml`
 
     Parameters:
-        dicto: a `Dicto` instance to be serialized.
+        dicto: a Dicto instance to be serialized.
         filepath: a `pathlib.Path` or `str` containing the path to the config file.
     """
 

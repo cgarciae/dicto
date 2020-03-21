@@ -2,7 +2,7 @@
 A dict-like object that enables access of its elements as regular fields. Dicto's main feature is delivering an elegant experience while using configuration files/objects. 
 
 ### Example
-You can create a `Dicto` from any `dict`: 
+You can create a Dicto from any `dict`: 
 
 ```python
 import dicto
