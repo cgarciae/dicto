@@ -1,0 +1,29 @@
+site_name: Dicto
+repo_name: cgarciae/dicto
+repo_url: https://github.com/cgarciae/dicto
+
+theme:
+  name: material
+
+nav:
+  - Introduction: index.md
+  - API Reference: api.md
+
+extra:
+  search:
+    language: en
+  social:
+    - type: github
+      link: https://github.com/cgarciae
+    - type: twitter
+      link: https://twitter.com/cgarciae88
+    - type: linkedin
+      link: https://www.linkedin.com/in/cgarciae
+
+markdown_extensions:
+  - admonition
+  - codehilite
+
+plugins:
+  - search
+  - mkdocstrings

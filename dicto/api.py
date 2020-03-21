@@ -3,27 +3,35 @@ import copy
 import functools
 import json
 import os
+import typing
+from pathlib import Path
 
 import xmltodict
 import yaml
-from pathlib import Path
 
 
 class Dicto(object):
-    def __init__(self, dict_=None, **kwargs):
+    """"""
+
+    def __init__(self, dict_: dict = None, **kwargs):
+        """
+        Creates a `Dicto` instance from a `dict` recursively, that is, inner fields of type, `dict`, `list`, `tuple`, and `set` and traversed and all `dict` objects found at any point are converted to a `Dicto`.
+
+        Parameters:
+            dict_: a `dict` object (or any object accepted by `dict`s constructor) to be converted to a `Dicto`.
+            kwargs: just like in `dict`, all keyword arguments are added as fields.
+        """
 
         if dict_ is None:
             dict_ = {}
-
-        if not isinstance(dict_, dict):
-            raise ValueError("dict_ parameters is not a python dict")
+        elif not isinstance(dict_, dict):
+            dict_ = dict(dict_)
 
         dict_.update(kwargs)
 
         to_dicto(dict_, dicto=self)
 
     def __setitem__(self, key, item):
-        # self._dict[key] = item
         setattr(self, key, item)
 
     def __getitem__(self, key):
@@ -63,40 +71,39 @@ def to_dicto(obj, dicto=None):
 
         return dicto
 
-    elif isinstance(obj, str):
-        return obj
-
     elif isinstance(obj, list):
         return [to_dicto(x) for x in obj]
 
     elif isinstance(obj, tuple):
         return tuple([to_dicto(x) for x in obj])
 
-    elif hasattr(obj, "__iter__"):
-        return (to_dicto(x) for x in obj)
-
+    elif isinstance(obj, set):
+        return {to_dicto(x) for x in obj}
     else:
         return obj
 
 
-def to_dict(obj, dict_=None):
+def to_dict(obj: typing.Any, dict_=None):
+    """
+    Converts a `Dicto` object to a `dict` recursively, that is, inner fields of type `Dicto`, `dict`, `list`, `tuple`, and `set` and traversed and all `Dicto` objects found at any point are converted to `dict`.
+
+    Parameters:
+        obj: a `Dicto`, `dict`, `list`, `tuple`, or `set` object to be parsed to a `dict`, objects of other types are returned as is.
+    """
 
     if isinstance(obj, dict):
-        return obj
+        return {key: to_dict(value) for key, value in obj.items()}
 
     elif isinstance(obj, Dicto):
 
         if dict_ is None:
             dict_ = dict()
 
-        for key, value in obj.__dict__.items():
+        for key, value in vars(obj).items():
 
             dict_[key] = to_dict(value)
 
         return dict_
-
-    elif isinstance(obj, str):
-        return obj
 
     elif isinstance(obj, list):
         return [to_dict(x) for x in obj]
@@ -104,22 +111,15 @@ def to_dict(obj, dict_=None):
     elif isinstance(obj, tuple):
         return tuple([to_dict(x) for x in obj])
 
-    elif hasattr(obj, "__iter__"):
-        return (to_dict(x) for x in obj)
+    elif isinstance(obj, set):
+        return {to_dict(x) for x in obj}
 
     else:
         return obj
 
 
 def merge(dicto, other):
-    """ Recursive dict merge. Inspired by :meth:``dict.update()``, instead of
-    updating only top-level keys, dict_merge recurses down into dicts nested
-    to an arbitrary depth, updating keys. The ``other`` is merged into
-    ``dicto``.
-    :param dicto: dict onto which the merge is executed
-    :param other: dict that is going to merged into dicto
-    :return: None
-    """
+
     if not isinstance(dicto, Dicto):
         dicto = Dicto(dicto)
 
@@ -135,7 +135,20 @@ def merge(dicto, other):
     return dicto
 
 
-def load(filepath: Path, as_dicto: bool = True):
+def load(filepath: Path) -> Dicto:
+    """
+    Loads a `Dicto` from a config file. Currently the following extension are valid:
+
+    * `.json`
+    * `.yaml` or `.yml`
+    * `.xml
+
+    Parameters:
+        filepath: a `pathlib.Path` or `str` containing the path to the config file.
+    
+    Returns:
+        A `Dicto` instance.
+    """
     if not isinstance(filepath, Path):
         filepath = Path(filepath)
 
@@ -157,13 +170,20 @@ def load(filepath: Path, as_dicto: bool = True):
     else:
         raise Exception("File type not supported.")
 
-    if as_dicto:
-        return to_dicto(dict_)
-    else:
-        return dict_
+    return to_dicto(dict_)
 
 
 def dump(dicto: Dicto, filepath: Path):
+    """
+    Serializes a `Dicto` instance to a config file. Currently the following extension are valid:
+
+    * `.json`
+    * `.yaml` or `.yml`
+
+    Parameters:
+        dicto: a `Dicto` instance to be serialized.
+        filepath: a `pathlib.Path` or `str` containing the path to the config file.
+    """
 
     if not isinstance(filepath, Path):
         filepath = Path(filepath)
